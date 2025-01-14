@@ -1,5 +1,3 @@
-Collecting workspace information
-
 # Educational Video Streaming System
 
 ## Overview
