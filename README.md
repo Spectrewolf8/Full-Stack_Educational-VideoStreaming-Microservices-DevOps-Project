@@ -63,51 +63,37 @@ MongoDB is used as the primary database for storing user information, video meta
 
 ### CI/CD
 
-GitLab CI/CD is used for continuous integration and deployment. The
+GitLab CI/CD is used for continuous integration and deployment. The `.gitlab-ci.yml` file defines the CI/CD pipeline, which includes stages for testing, building, deploying, and monitoring the application.
 
-.gitlab-ci.yml
+### Load Balancing & Reverse Proxy
 
-file defines the CI/CD pipeline, which includes stages for testing, building, deploying, and monitoring the application.
+HAProxy serves as both a load balancer and reverse proxy in this architecture:
 
-### Load Balancing
+- **Load Balancing**: Distributes incoming HTTP requests across multiple instances of microservices to ensure optimal resource utilization and high availability.
 
-HAProxy is used to load balance incoming HTTP requests across the different microservices. The
+- **Reverse Proxy**:
+  - Routes requests to appropriate backend services based on URL paths (`/auth-backend`, `/videos-backend`, `/watchlist-backend`)
+  - Handles URL path rewriting to maintain clean API endpoints
+  - Manages CORS headers and preflight requests
+  - Provides a single entry point (port 80) for all frontend and backend services
+  - Hides internal service architecture from external clients
+  - Adds an additional security layer by not exposing backend services directly
 
-haproxy.cfg
-
-file defines the routing rules and backend services.
+The routing configuration can be found in [haproxy.cfg](haproxy.cfg), which defines frontend and backend rules for request handling and service routing.
 
 ## Setup Instructions
 
 1. Clone the repository.
-2. Navigate to the
-
-frontend
-
-directory and run `npm install` to install dependencies. 3. Navigate to the
-
-backend
-
-directory and set up a virtual environment, then install dependencies from
-
-requirements.txt
-
-. 4. Configure AWS credentials for S3 and EC2. 5. Run the backend services using Docker with `docker-compose up`. 6. Start the frontend application with `npm start`.
+2. Navigate to the `frontend` directory and run `npm install` to install dependencies.
+3. Navigate to the `backend` directory and set up a virtual environment, then install dependencies from `requirements.txt`.
+4. Configure AWS credentials for S3 and EC2. 5. Run the backend services using Docker with `docker-compose up`. 6. Start the frontend application with `npm start`.
 
 ## Deployment
 
 To deploy the application to a remote server, follow these steps:
 
 1. Ensure the remote server has Docker and Docker Compose installed.
-2. Copy the
-
-remote.docker-compose.yml
-
-file to the remote server. 3. Configure the environment variables in the
-
-.env
-
-file. 4. Run the following commands on the remote server:
+2. Copy the`remote.docker-compose.yml` file to the remote server. 3. Configure the environment variables in the `.env` file. 4. Run the following commands on the remote server:
 
 ```sh
 docker-compose -f remote.docker-compose.yml up -d
@@ -115,11 +101,7 @@ docker-compose -f remote.docker-compose.yml up -d
 
 ## Monitoring
 
-The
-
-setup_monitoring.py
-
-script sets up a CloudWatch dashboard for monitoring the application's health and performance. It includes widgets for service health, application health, network health, API performance, security metrics, service availability, S3 storage metrics, custom application metrics, and estimated AWS charges.
+The `setup_monitoring.py` script sets up a CloudWatch dashboard for monitoring the application's health and performance. It includes widgets for service health, application health, network health, API performance, security metrics, service availability, S3 storage metrics, custom application metrics, and estimated AWS charges.
 
 ## License
 
