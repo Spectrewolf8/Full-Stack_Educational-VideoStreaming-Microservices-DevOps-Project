@@ -67,19 +67,56 @@ GitLab CI/CD is used for continuous integration and deployment. The `.gitlab-ci.
 
 ### Load Balancing & Reverse Proxy
 
-HAProxy serves as both a load balancer and reverse proxy in this architecture:
+HAProxy serves as both a load balancer and reverse proxy, handling traffic routing between containerized microservices:
 
-- **Load Balancing**: Distributes incoming HTTP requests across multiple instances of microservices to ensure optimal resource utilization and high availability.
+#### Container Routing
 
-- **Reverse Proxy**:
-  - Routes requests to appropriate backend services based on URL paths (`/auth-backend`, `/videos-backend`, `/watchlist-backend`)
-  - Handles URL path rewriting to maintain clean API endpoints
-  - Manages CORS headers and preflight requests
-  - Provides a single entry point (port 80) for all frontend and backend services
-  - Hides internal service architecture from external clients
-  - Adds an additional security layer by not exposing backend services directly
+- **Frontend Container**: `frontend:8080`
 
-The routing configuration can be found in [haproxy.cfg](haproxy.cfg), which defines frontend and backend rules for request handling and service routing.
+  - Serves as default backend
+  - Handles all non-API requests
+  - Container name: `frontend`
+
+- **Auth Service Container**: `auth_service:5000`
+
+  - Routes `/auth-backend/*` requests
+  - Handles authentication & user management
+  - Container name: `auth_service`
+
+- **Video Service Container**: `video_service:5001`
+
+  - Routes `/videos-backend/*` requests
+  - Manages video streaming & metadata
+  - Container name: `video_service`
+
+- **Watchlist Service Container**: `watchlist_service:5002`
+  - Routes `/watchlist-backend/*` requests
+  - Manages user watchlists
+  - Container name: `watchlist_service`
+
+#### Path Rewriting
+
+HAProxy rewrites incoming paths before forwarding:
+
+- `/auth-backend/login` → `auth_service:5000/login`
+- `/videos-backend/stream` → `video_service:5001/stream`
+- `/watchlist-backend/add` → `watchlist_service:5002/add`
+
+#### Inter-Container Communication
+
+- Containers communicate via Docker network `app_network`
+- HAProxy routes based on container DNS names
+- Internal ports are not exposed outside Docker network
+- Only HAProxy port 80 is exposed externally
+
+#### Security Features
+
+- Handles CORS and preflight requests
+- Single entry point (port 80) for all services
+- Internal services not directly accessible
+- Path-based routing with clean URLs
+
+The routing configuration and container networking is defined in [haproxy.cfg](haproxy.cfg) and managed by Docker Compose.
 
 ## Setup Instructions
 
